@@ -1,0 +1,14 @@
+[
+  {
+    "id": "nebula-falls",
+    "title": "Nebula Falls",
+    "description": "A crystalline skyline and rivers of starlight.",
+    "genre": "sci-fi/fantasy"
+  },
+  {
+    "id": "elders-wood",
+    "title": "Elders' Wood",
+    "description": "Mossy glades where ancient stones whisper.",
+    "genre": "fantasy"
+  }
+]
