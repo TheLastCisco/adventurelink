@@ -1,6 +1,12 @@
 import Link from 'next/link';
+import { useState, useContext } from 'react';
+import { AuthContext } from '../contexts/AuthContext';
+import SignInModal from './SignInModal';
 
 export default function NavBar() {
+  const { user, signOut } = useContext(AuthContext);
+  const [open, setOpen] = useState(false);
+
   return (
     <nav className="w-full py-4 px-6 flex items-center justify-between card">
       <div className="flex items-center space-x-4">
@@ -14,7 +20,20 @@ export default function NavBar() {
         <Link href="/party"><a className="ml-4 neon">Party</a></Link>
         <Link href="/combat-demo"><a className="ml-4 neon">Combat Demo</a></Link>
       </div>
-      <div className="text-sm opacity-80">Infinite Bastion • Prototype</div>
+
+      <div className="flex items-center space-x-4">
+        {user ? (
+          <>
+            <div className="text-sm opacity-90">{user.email}</div>
+            <button onClick={() => signOut()} className="px-3 py-1 rounded neon bg-cyan-800/30">Sign Out</button>
+          </>
+        ) : (
+          <>
+            <button onClick={() => setOpen(true)} className="px-3 py-1 rounded neon bg-cyan-800/30">Sign In</button>
+            <SignInModal open={open} onClose={() => setOpen(false)} />
+          </>
+        )}
+      </div>
     </nav>
   );
 }
