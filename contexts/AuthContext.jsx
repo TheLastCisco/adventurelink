@@ -1,42 +1,48 @@
 import { createContext, useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
 
-export const AuthContext = createContext({ user: null, session: null, signIn: async ()=>{}, signOut: async ()=>{} });
+export const AuthContext = createContext({ user: null, session: null, initializing: true, signIn: async ()=>{}, signOut: async ()=>{} });
 
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(null);
   const [user, setUser] = useState(null);
+  const [initializing, setInitializing] = useState(true);
 
   useEffect(() => {
     let mounted = true;
-    (async () => {
-      const {
-        data: { session }
-      } = await supabase.auth.getSession();
-      if (!mounted) return;
-      setSession(session);
-      setUser(session?.user ?? null);
-    })();
 
-    // subscribe to auth state changes
-    const { data } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
+    const init = async () => {
+      try {
+        const { data } = await supabase.auth.getSession();
+        if (!mounted) return;
+        setSession(data?.session ?? null);
+        setUser(data?.session?.user ?? null);
+      } catch (err) {
+        console.error('Error fetching initial session', err);
+      } finally {
+        if (mounted) setInitializing(false);
+      }
+    };
+
+    init();
+
+    // subscribe to auth changes and capture the subscription explicitly
+    const { data: subscriptionData } = supabase.auth.onAuthStateChange((event, session) => {
+      setSession(session ?? null);
       setUser(session?.user ?? null);
+      setInitializing(false);
     });
+
+    const subscription = subscriptionData?.subscription || subscriptionData;
 
     return () => {
       mounted = false;
-      if (data?.subscription) data.subscription.unsubscribe();
+      if (subscription?.unsubscribe) subscription.unsubscribe();
     };
   }, []);
 
-  /**
-   * Send magic link. By default directs to NEXT_PUBLIC_SITE_URL (client env).
-   * You may pass an optional `redirectTo` argument.
-   */
   async function signIn(email, redirectTo) {
     const redirect = redirectTo ?? process.env.NEXT_PUBLIC_SITE_URL ?? null;
-    // supabase-js v2 supports passing options: { emailRedirectTo }
     const { data, error } = await supabase.auth.signInWithOtp({
       email,
       options: redirect ? { emailRedirectTo: `${redirect}` } : undefined,
@@ -52,7 +58,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, session, signIn, signOut }}>
+    <AuthContext.Provider value={{ user, session, initializing, signIn, signOut }}>
       {children}
     </AuthContext.Provider>
   );

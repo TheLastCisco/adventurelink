@@ -4,8 +4,13 @@ import { AuthContext } from '../contexts/AuthContext';
 import SignInModal from './SignInModal';
 
 export default function NavBar() {
-  const { user, signOut } = useContext(AuthContext);
+  const { user, signOut, initializing } = useContext(AuthContext);
   const [open, setOpen] = useState(false);
+
+  function openSignIn() {
+    if (initializing) return; // prevent opening modal while auth is initializing
+    setOpen(true);
+  }
 
   return (
     <nav className="w-full py-4 px-6 flex items-center justify-between card">
@@ -22,15 +27,17 @@ export default function NavBar() {
       </div>
 
       <div className="flex items-center space-x-4">
-        {user ? (
+        {initializing ? (
+          <div className="w-24 h-6 bg-black/10 rounded animate-pulse" />
+        ) : user ? (
           <>
             <div className="text-sm opacity-90">{user.email}</div>
             <button onClick={() => signOut()} className="px-3 py-1 rounded neon bg-cyan-800/30">Sign Out</button>
           </>
         ) : (
           <>
-            <button onClick={() => setOpen(true)} className="px-3 py-1 rounded neon bg-cyan-800/30">Sign In</button>
-            <SignInModal open={open} onClose={() => setOpen(false)} />
+            <button onClick={openSignIn} className="px-3 py-1 rounded neon bg-cyan-800/30">Sign In</button>
+            {open && !initializing && <SignInModal open={open} onClose={() => setOpen(false)} />}
           </>
         )}
       </div>
