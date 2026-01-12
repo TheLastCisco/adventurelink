@@ -14,6 +14,7 @@ export default function SignInModal({ open, onClose }) {
     setLoading(true);
     setMessage(null);
     try {
+      // signIn will use NEXT_PUBLIC_SITE_URL for redirect if configured
       await signIn(email);
       setMessage('Check your email for a magic link to sign in.');
     } catch (err) {

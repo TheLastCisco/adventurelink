@@ -36,8 +36,11 @@ export default function CharacterPage() {
   async function handleSave(char) {
     if (!user) return alert('Please sign in to save characters.');
     try {
-      const payload = { id: char.id || `char-${Date.now()}`, owner: user.id, data: char };
-      const { error } = await supabase.from('characters').upsert(payload);
+      // generate a non-demo id (UUID) on the client
+      const id = (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : `char-${Date.now()}`;
+      const payload = { id, owner: user.id, data: char };
+      // insert (use upsert if you want to allow updates)
+      const { error } = await supabase.from('characters').insert(payload);
       if (error) throw error;
       setSaved(char);
       // refresh list

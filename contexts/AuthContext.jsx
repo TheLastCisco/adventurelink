@@ -18,19 +18,29 @@ export function AuthProvider({ children }) {
       setUser(session?.user ?? null);
     })();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    // subscribe to auth state changes
+    const { data } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
     });
 
     return () => {
       mounted = false;
-      subscription.unsubscribe();
+      if (data?.subscription) data.subscription.unsubscribe();
     };
   }, []);
 
-  async function signIn(email) {
-    const { data, error } = await supabase.auth.signInWithOtp({ email });
+  /**
+   * Send magic link. By default directs to NEXT_PUBLIC_SITE_URL (client env).
+   * You may pass an optional `redirectTo` argument.
+   */
+  async function signIn(email, redirectTo) {
+    const redirect = redirectTo ?? process.env.NEXT_PUBLIC_SITE_URL ?? null;
+    // supabase-js v2 supports passing options: { emailRedirectTo }
+    const { data, error } = await supabase.auth.signInWithOtp({
+      email,
+      options: redirect ? { emailRedirectTo: `${redirect}` } : undefined,
+    });
     if (error) throw error;
     return data;
   }
